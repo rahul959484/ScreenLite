@@ -77,21 +77,23 @@ DB_PASSWORD=
 
 PHP reads `DB_HOST`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD` from its environment. Node.js reads the database settings from `node-api/.env`.
 
-If `node-api/.env` does not exist, create it from the example in PowerShell:
+If `node-api/.env` does not exist, create it from the example in PowerShell while your terminal is in the `node-api` folder:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-Run this command from the `node-api` folder. If `.env` already exists, do not overwrite it; check its values instead. Update the settings to match your local MariaDB. Never commit `.env`, passwords, or AWS credentials. Only `.env.example` belongs in the repository.
+If `.env` already exists, do not overwrite it; check its values instead. Update the settings to match your local MariaDB. Never commit `.env`, passwords, or AWS credentials. Only `.env.example` belongs in the repository.
 
 ## Run the PHP Application
 
-1. Make sure the project is under XAMPP's `htdocs` directory.
+1. Clone or copy this repository into a folder under your XAMPP `htdocs` directory. For example, you can use `C:\xampp\htdocs\ScreenLite`; the folder does not need to be named `rahul.web`.
 2. Start Apache and MySQL in XAMPP.
-3. Open:
+3. Open the PHP page using the folder path relative to `htdocs`. For the example folder above, use:
 
-   [http://localhost/rahul.web/ScreenLite/php-admin/](http://localhost/rahul.web/ScreenLite/php-admin/)
+   [http://localhost/ScreenLite/php-admin/](http://localhost/ScreenLite/php-admin/)
+
+   If you put the project in a different folder under `htdocs`, replace `ScreenLite` in the URL with that folder's relative path. For example, this workspace is in `htdocs\rahul.web\ScreenLite`, so its URL is `http://localhost/rahul.web/ScreenLite/php-admin/`.
 
 The page can add a screen by name, generate its unique device code, list all screens and their last-seen time/status, and delete a screen. Add and delete use POST. After either operation the page redirects, so refreshing does not repeat the operation.
 
@@ -103,16 +105,17 @@ The `last_seen_at` MariaDB `DATETIME` value is stored as India Standard Time (IS
 
 ## Run the Node.js API
 
-Open a PowerShell terminal in the project directory and run:
+Open a PowerShell terminal in the folder where you cloned the project. For the example location `C:\xampp\htdocs\ScreenLite`, run:
 
 ```powershell
-Set-Location .\node-api
+Set-Location C:\xampp\htdocs\ScreenLite\node-api
 npm.cmd install
+Copy-Item .env.example .env
 npm.cmd run seed
 npm.cmd start
 ```
 
-Keep the API terminal open while using the API. By default, it listens on `http://localhost:3000`.
+If `.env` already exists, do not overwrite it with the copy command; keep its local settings. Keep the API terminal open while using the API. By default, it listens on `http://localhost:3000`.
 
 The seed script creates a sample screen with device code `SCR-SAMPLE000001` and two playlist items. It is safe to run again without duplicating those sample items. The media URLs use `example.com` and are placeholders, not actual hosted media.
 
@@ -173,10 +176,10 @@ Items are sorted by ascending `position`. An existing screen with no playlist re
 
 ## Automated Tests
 
-From a second PowerShell terminal, run:
+From a second PowerShell terminal, run these commands, replacing the example path with the folder where you cloned the project:
 
 ```powershell
-Set-Location .\node-api
+Set-Location C:\xampp\htdocs\ScreenLite\node-api
 npm.cmd test
 ```
 
