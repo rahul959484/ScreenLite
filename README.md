@@ -206,6 +206,5 @@ If more time were available, I would add authenticated admin access, real media 
 
 - **GitHub repository:** [https://github.com/rahul959484/ScreenLite](https://github.com/rahul959484/ScreenLite)
 - **Start time:** 02 November 2026, 2:30 PM IST
-- **Finish time:** 02 November 2026, 5:18 PM IST
+- **Finish time:** 02 November 2026, 4:45 PM IST
 - **Email subject:** `ScreenLite Assignment: Rahul Gupta`
-
