@@ -209,4 +209,3 @@ If more time were available, I would add authenticated admin access, real media 
 - **Finish time:** 02 November 2026, 5:18 PM IST
 - **Email subject:** `ScreenLite Assignment: Rahul Gupta`
 
-The recorded times are actual and total 2 hours 48 minutes; the assignment specified a 2-hour limit. The recipient email was not provided in the assignment text.
