@@ -1,0 +1,24 @@
+{
+  "name": "screenlite-node-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Device heartbeat and playlist API for ScreenLite",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node seed.js",
+    "test": "jest --runInBand"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2",
+    "mysql2": "^3.14.1"
+  },
+  "devDependencies": {
+    "jest": "^30.5.2",
+    "supertest": "^7.1.1"
+  }
+}
