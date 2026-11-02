@@ -1,67 +1,105 @@
 # ScreenLite
 
-## Project overview
+## Project Overview
 
-ScreenLite is a small digital-signage screen-monitoring assignment. An admin adds and manages screens in a plain PHP page. Each screen receives a unique device code; a device uses that code to send heartbeats to a Node.js API. The PHP page shows a screen as **Online** when its last heartbeat was within 120 seconds, and **Offline** otherwise. A second API endpoint returns that screen's playlist as JSON.
+ScreenLite is a digital-signage screen-monitoring assignment built with PHP, Node.js, and MariaDB.
 
-The PHP page and Node.js API share a MariaDB database. No login, physical device software, media player, or AWS deployment is included because these were not required by the assignment.
+An administrator can add, view, and delete screens in a plain PHP page. Each screen receives a unique device code. A device sends heartbeat requests to the Node.js API to update its last-seen timestamp. The PHP page shows a screen as:
+
+- **Online:** A heartbeat was received within the last 120 seconds.
+- **Offline:** No heartbeat has been received, or the most recent heartbeat is older than 120 seconds.
+
+A separate API endpoint returns that screen's playlist as JSON. The PHP page and Node.js API use the same MariaDB database.
 
 ## Technologies
 
 - PHP 8+ with PDO
-- Node.js 18+ with Express
-- MariaDB/MySQL with `mysql2/promise`
-- dotenv for Node.js configuration
-- Jest and Supertest for automated API tests
+- Node.js 18+ with Express.js
+- MariaDB / MySQL
+- `mysql2/promise` and `dotenv`
+- Jest and Supertest
+- HTML and minimal CSS
 
-## Project structure
+## Project Structure
 
 ```text
-database/schema.sql              Database and the two shared tables
-php-admin/config/database.php    PHP PDO connection
-php-admin/index.php              Add/list/delete screens and display status
-node-api/config/database.js      MariaDB connection pool
-node-api/routes/deviceRoutes.js  Heartbeat and playlist endpoints
-node-api/app.js                  Express app, exported for tests
-node-api/server.js               API server startup
-node-api/seed.js                 Repeat-safe sample screen and playlist
-node-api/tests/heartbeat.test.js Automated heartbeat input tests
-node-api/package.json            Node.js scripts and dependencies
-node-api/package-lock.json       Locked Node.js dependency versions
-node-api/.env.example            Safe environment-variable template
-ANSWERS.md                       Answers to the four AWS questions
-.gitignore                       Excludes local secrets and generated files
+ScreenLite/
+├── database/
+│   └── schema.sql
+├── php-admin/
+│   ├── config/
+│   │   └── database.php
+│   └── index.php
+├── node-api/
+│   ├── config/
+│   │   └── database.js
+│   ├── routes/
+│   │   └── deviceRoutes.js
+│   ├── tests/
+│   │   └── heartbeat.test.js
+│   ├── app.js
+│   ├── server.js
+│   ├── seed.js
+│   ├── package.json
+│   ├── package-lock.json
+│   └── .env.example
+├── ANSWERS.md
+├── .gitignore
+└── README.md
 ```
 
-## Requirements
+## Prerequisites
 
 - XAMPP with Apache and MariaDB/MySQL
-- PHP 8+
-- Node.js 18+ and npm
+- PHP 8 or later
+- Node.js 18 or later and npm
+- Postman (optional, for manually testing the API)
 
-## Database setup
+## Database Setup
 
-1. Start **Apache** and **MySQL** in the XAMPP Control Panel.
-2. Open phpMyAdmin at `http://localhost/phpmyadmin`.
-3. Select **Import**, choose `database/schema.sql`, and run the import. This creates the `screenlite` database and its `screens` and `playlist_items` tables.
+1. Open the XAMPP Control Panel and start **Apache** and **MySQL**.
+2. Open [phpMyAdmin](http://localhost/phpmyadmin).
+3. Select **Import**, choose `database/schema.sql`, and run the import.
 
-For a typical local XAMPP installation, the database host is `127.0.0.1`, the username is `root`, and the password is empty. Use these defaults only if they match your local configuration.
+This creates the `screenlite` database and its `screens` and `playlist_items` tables. Both tables use auto-increment primary keys. `device_code` is unique. `playlist_items.screen_id` references `screens.id` with `ON DELETE CASCADE`, so deleting a screen also deletes its playlist items.
 
-PHP reads `DB_HOST`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD` from its environment. Node.js reads the same database settings plus `DB_PORT` from `node-api/.env`. The `.env.example` file contains placeholders/default local settings; copy it to `.env` if needed and edit it to match your MariaDB configuration. Never put real passwords or AWS keys in submitted files.
+### Database Configuration
 
-The schema uses InnoDB. `playlist_items.screen_id` references `screens.id` with `ON DELETE CASCADE`, so deleting a screen also deletes its playlist items. The `screens.id` and `playlist_items.id` columns are auto-incrementing primary keys, and `device_code` is unique.
+The common local XAMPP settings are below, if they match your MariaDB installation:
 
-## Run the PHP admin page
+```text
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_NAME=screenlite
+DB_USER=root
+DB_PASSWORD=
+```
 
-With XAMPP Apache and MySQL running, visit:
+PHP reads `DB_HOST`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD` from its environment. Node.js reads the database settings from `node-api/.env`.
 
-`http://localhost/rahul.web/ScreenLite/php-admin/`
+If `node-api/.env` does not exist, create it from the example in PowerShell:
 
-Enter a screen name and select **Add Screen**. PHP validates the name, generates a secure unique device code, and inserts the screen. The page lists screens, their last-seen time in **India Standard Time (IST)**, status, and a POST-only Delete action. After an add/delete submission, the page redirects before displaying the list, so refreshing does not repeat that action.
+```powershell
+Copy-Item .env.example .env
+```
 
-### Heartbeat time and status
+Run this command from the `node-api` folder. If `.env` already exists, do not overwrite it; check its values instead. Update the settings to match your local MariaDB. Never commit `.env`, passwords, or AWS credentials. Only `.env.example` belongs in the repository.
 
-The `last_seen_at` MariaDB `DATETIME` value is stored as IST (`Asia/Kolkata`, UTC+05:30). The API writes the current UTC time plus 330 minutes; PHP interprets and compares the stored value as IST. A NULL time displays as `Never` and is Offline. A heartbeat no older than 120 seconds is Online.
+## Run the PHP Application
+
+1. Make sure the project is under XAMPP's `htdocs` directory.
+2. Start Apache and MySQL in XAMPP.
+3. Open:
+
+   [http://localhost/rahul.web/ScreenLite/php-admin/](http://localhost/rahul.web/ScreenLite/php-admin/)
+
+The page can add a screen by name, generate its unique device code, list all screens and their last-seen time/status, and delete a screen. Add and delete use POST. After either operation the page redirects, so refreshing does not repeat the operation.
+
+The page uses prepared statements for SQL and `htmlspecialchars()` to escape displayed values.
+
+### Heartbeat and Timezone
+
+The `last_seen_at` MariaDB `DATETIME` value is stored as India Standard Time (IST, `Asia/Kolkata`, UTC+05:30). The API writes UTC plus 330 minutes, and PHP interprets and compares the stored value as IST. The database column is nullable: `NULL` displays as **Never** and is **Offline**.
 
 ## Run the Node.js API
 
@@ -69,21 +107,21 @@ Open a PowerShell terminal in the project directory and run:
 
 ```powershell
 Set-Location .\node-api
-Copy-Item .env.example .env
 npm.cmd install
 npm.cmd run seed
 npm.cmd start
 ```
 
-If `.env` already exists, do not overwrite it; check its database settings instead. Keep the API terminal open while using the API. By default, it listens on port `3000`.
+Keep the API terminal open while using the API. By default, it listens on `http://localhost:3000`.
 
-The seed script creates the sample screen with device code `SCR-SAMPLE000001` and two example playlist items. It does not duplicate those items when run again. The media URLs use `example.com` and are placeholders, not actual media.
+The seed script creates a sample screen with device code `SCR-SAMPLE000001` and two playlist items. It is safe to run again without duplicating those sample items. The media URLs use `example.com` and are placeholders, not actual hosted media.
 
-## API endpoints
+## API Endpoints
 
-### Send a heartbeat
+### 1. Device Heartbeat
 
-**POST** `http://localhost:3000/v1/devices/heartbeat`
+**Method:** `POST`
+**URL:** `http://localhost:3000/v1/devices/heartbeat`
 
 JSON body:
 
@@ -93,7 +131,7 @@ JSON body:
 }
 ```
 
-For a known device, the API updates `last_seen_at` and returns HTTP `200`:
+Successful response (**HTTP 200**):
 
 ```json
 {
@@ -102,13 +140,14 @@ For a known device, the API updates `last_seen_at` and returns HTTP `200`:
 }
 ```
 
-Invalid/missing input returns `400`; an unknown device code returns `404`. The manual request simulates a device. A real device would send heartbeats automatically using its own code.
+The API verifies that the device code exists and updates `last_seen_at`. Missing or invalid input returns **400**; an unknown code returns **404**. A manual request can simulate a device heartbeat; a real device would send requests automatically using its own code.
 
-### Get a screen's playlist
+### 2. Get a Screen's Playlist
 
-**GET** `http://localhost:3000/v1/devices/SCR-SAMPLE000001/playlist`
+**Method:** `GET`
+**Example URL:** `http://localhost:3000/v1/devices/SCR-SAMPLE000001/playlist`
 
-The API returns playlist items sorted by ascending `position`:
+Successful response (**HTTP 200**):
 
 ```json
 {
@@ -130,36 +169,44 @@ The API returns playlist items sorted by ascending `position`:
 }
 ```
 
-An existing screen with no playlist returns HTTP `200` and `"data": []`. An unknown device returns `404`. Playlist data is returned by the API as JSON; this project does not include a video player or a PHP playlist-management page.
+Items are sorted by ascending `position`. An existing screen with no playlist returns **200** with `"data": []`; an unknown code returns **404**. The API returns playlist JSON; this project does not include a media player or a PHP playlist-management page.
 
-## Automated tests
+## Automated Tests
 
-Open a second PowerShell terminal and run:
+From a second PowerShell terminal, run:
 
 ```powershell
 Set-Location .\node-api
 npm.cmd test
 ```
 
-The Jest/Supertest tests verify that missing and non-string `device_code` inputs return HTTP `400` with `success: false`. These invalid-input tests do not need a database connection. The Express app is separate from the server startup so the tests do not open a network port.
+The Jest/Supertest suite contains two heartbeat input tests:
 
-## Security and assumptions
+1. Missing `device_code` returns **400**.
+2. A non-string `device_code` returns **400**.
 
-- SQL values use prepared/parameterized statements; displayed PHP values are HTML-escaped.
-- The database connection settings are configurable. The local `.env` file is ignored by Git; only `.env.example` belongs in the submission.
+Both verify `success: false`. These invalid-input tests do not require a live database connection because the Express app is separated from server startup.
+
+## Security and Assumptions
+
+- PHP and Node.js use prepared/parameterized SQL statements.
+- PHP validates input and HTML-escapes dynamic output.
+- `.env` and `node_modules/` are excluded by `.gitignore`; do not commit credentials.
 - API errors use JSON and do not expose SQL credentials or stack traces.
-- Admin authentication, CSRF protection, real media hosting, physical device integration, and AWS deployment are outside the assignment scope.
+- Admin login, CSRF protection, physical device integration, actual media hosting/playback, and AWS deployment are outside the assignment scope.
+- AWS architecture answers are provided separately in `ANSWERS.md`.
 
-## Completion and next steps
+## Completion and Future Improvements
 
-The required PHP screen page, shared database schema, heartbeat and playlist endpoints, sample seed data, automated test, and AWS answers are included. The sample media URLs are illustrative. With more time, I would add authenticated admin access, real media storage, and integration tests for database-backed API cases.
+The required PHP screen-management page, shared database schema, heartbeat and playlist endpoints, sample seed data, automated API tests, and AWS answers are included. The sample media URLs are illustrative.
 
-## Submission checklist
+If more time were available, I would add authenticated admin access, real media hosting, database-backed API integration tests, and software integration with physical signage devices.
 
-- GitHub repository: https://github.com/rahul959484/ScreenLite
-- Actual start time: **[fill in your start time]**
-- Actual finish time: **[fill in your finish time]**
-- Email subject: `ScreenLite Assignment: Your Name`
-- Recipient email: the assignment document leaves this as `[add email address]`; obtain it from the assignment contact rather than guessing.
+## Submission Details
 
-Before sharing the repository, confirm that `.env` and `node_modules/` are not included. Do not commit credentials. No repository has been created, committed, or pushed as part of this work.
+- **GitHub repository:** [https://github.com/rahul959484/ScreenLite](https://github.com/rahul959484/ScreenLite)
+- **Start time:** 02 November 2026, 2:30 PM IST
+- **Finish time:** 02 November 2026, 5:18 PM IST
+- **Email subject:** `ScreenLite Assignment: Rahul Gupta`
+
+The recorded times are actual and total 2 hours 48 minutes; the assignment specified a 2-hour limit. The recipient email was not provided in the assignment text.
